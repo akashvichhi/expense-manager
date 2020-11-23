@@ -8,6 +8,16 @@ target 'ExpanseManager' do
 
   use_react_native!(:path => config["reactNativePath"])
 
+  pod 'RNFS', :path => '../node_modules/react-native-fs'
+
+  pod 'react-native-sqlite-storage', :path => '../node_modules/react-native-sqlite-storage'
+
+  pod 'react-native-html-to-pdf', :path => '../node_modules/react-native-html-to-pdf'
+
+  pod 'RNVectorIcons', :path => '../node_modules/react-native-vector-icons'
+
+  pod 'RNDateTimePicker', :path => '../node_modules/@react-native-community/datetimepicker'
+
   target 'ExpanseManagerTests' do
     inherit! :complete
     # Pods for testing
