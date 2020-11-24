@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { TextInput, View, StyleSheet } from 'react-native';
-import { Button, Text } from 'native-base';
+import { View, StyleSheet } from 'react-native';
+import { Button, Text, Form, Input, Textarea, Item } from 'native-base';
 import DatePicker from '@react-native-community/datetimepicker';
 import Fontisto from 'react-native-vector-icons/Fontisto';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -9,27 +9,38 @@ import Functions from './Functions';
 const style = StyleSheet.create({
     form: {
         paddingHorizontal: 10,
+    },
+    formItem: {
+        borderColor: "#7b7f9c",
+        borderRadius: 5,
         marginTop: 15,
     },
-    formRow: {
-        marginTop: 15,
+    formInput: {
+        fontSize: 16,
+        paddingLeft: 15,
     },
-    input: {
+    noBorder: {
+        borderTopWidth: 0,
+        borderBottomWidth: 0,
+        borderLeftWidth: 0,
+        borderRightWidth: 0,
+    },
+    submitBtn: {
+        backgroundColor: "#7b7f9c",
+        borderRadius: 5,
+        flex: 1,
+    },
+    submitText: {
+        fontSize: 16,
+        width: "100%",
+        textAlign: "center",
+    },
+    dateBtn: {
         borderColor: "#7b7f9c",
         borderWidth: 1,
         borderRadius: 5,
-        fontSize: 16,
-        paddingVertical: 7,
-        paddingHorizontal: 15,
-    },
-    error: {
-        color: "#900",
-        fontSize: 14,
-        marginTop: 5,
-    },
-    dateBtn: {
+        flex: 1,
         justifyContent: "flex-start",
-        paddingHorizontal: 0,
     },
     dateText: {
         color: "#333",
@@ -40,9 +51,9 @@ const style = StyleSheet.create({
         marginRight: 10,
         marginLeft: 15,
     },
-    submit: {
-        backgroundColor: "#7b7f9c",
-        borderRadius: 5,
+    textarea: {
+        fontSize: 16,
+        paddingLeft: 15,
     },
 });
 
@@ -77,8 +88,6 @@ const ItemForm = ({ type }) => {
     const [showDatePicker, setDatePicker] = useState(false);
     const [showTimePicker, setTimePicker] = useState(false);
 
-    const [error, setError] = useState("");
-
     const handleInput = (key, value) => {
         const temp = item;
         temp[key] = value;
@@ -97,7 +106,6 @@ const ItemForm = ({ type }) => {
     }
 
     const setTime = (event, selectedTime) => {
-        console.log(selectedTime);
         setTimePicker(false);
         if(event.type == "set") {
             const temp = item;
@@ -110,10 +118,9 @@ const ItemForm = ({ type }) => {
 
     const handleSubmit = () => {
         if(item.amount == "") {
-            setError("Please enter amount");
+            Functions.showToastMessage("Please enter amount");
         }
         else {
-            setError("");
             Functions.addItem(item).then(() => {
                 Functions.showToastMessage("Item saved");
                 emptyItem();
@@ -126,57 +133,51 @@ const ItemForm = ({ type }) => {
 
     return (
         <View style={style.form}>
-            <View>
-                <TextInput
-                    placeholder="Amount"
-                    keyboardType="number-pad"
-                    value={item.amount}
-                    onChangeText={value => handleInput('amount', value)}
-                    style={style.input}
-                />
-                {error != "" ?
-                    <Text style={style.error}>{error}</Text>
-                : null}
-            </View>
-            <View style={style.formRow}>
-                {showDatePicker && <DatePicker
-                    value={item.timestamp}
-                    onChange={setDate}
-                />}
-                <Button block transparent style={[style.input, style.dateBtn]} onPress={() => setDatePicker(true)}>
-                    <Fontisto name="date" size={20} style={style.icon} />
-                    <Text uppercase={false} style={style.dateText}>{item.date}</Text>
-                </Button>
-            </View>
-            <View style={style.formRow}>
-                {showTimePicker && <DatePicker
-                    value={item.timestamp}
-                    onChange={setTime}
-                    mode="time"
-                    display="clock"
-                    is24Hour={false}
-                />}
-                <Button block transparent style={[style.input, style.dateBtn]} onPress={() => setTimePicker(true)}>
-                    <Ionicons name="time-outline" size={24} style={[style.icon, { marginRight: 6 }]} />
-                    <Text uppercase={false} style={style.dateText}>{item.time}</Text>
-                </Button>
-            </View>
-            <View style={style.formRow}>
-                <TextInput
+            <Form>
+                <Item regular style={style.formItem}>
+                    <Input
+                        placeholder="Amount"
+                        onChangeText={value => handleInput('amount', value)}
+                        style={style.formInput}
+                        value={item.amount}
+                    />
+                </Item>
+                <Item regular style={[style.formItem, style.noBorder]}>
+                    {showDatePicker && <DatePicker
+                        value={item.timestamp}
+                        onChange={setDate}
+                    />}
+                    <Button block transparent style={style.dateBtn} onPress={() => setDatePicker(true)}>
+                        <Fontisto name="date" size={20} style={style.icon} />
+                        <Text uppercase={false} style={style.dateText}>{item.date}</Text>
+                    </Button>
+                </Item>
+                <Item regular style={[style.formItem, style.noBorder]}>
+                    {showTimePicker && <DatePicker
+                        value={item.timestamp}
+                        onChange={setTime}
+                        mode="time"
+                        display="clock"
+                        is24Hour={false}
+                    />}
+                    <Button block transparent style={style.dateBtn} onPress={() => setTimePicker(true)}>
+                        <Ionicons name="time-outline" size={24} style={[style.icon, { marginRight: 6 }]} />
+                        <Text uppercase={false} style={style.dateText}>{item.time}</Text>
+                    </Button>
+                </Item>
+                <Textarea
+                    rowSpan={5} bordered
                     placeholder="Description (optional)"
-                    value={item.description}
                     onChangeText={value => handleInput('description', value)}
-                    numberOfLines={5}
-                    multiline
-                    textAlignVertical="top"
-                    style={style.input}
+                    value={item.description}
+                    style={[style.formItem, style.textarea]}
                 />
-            </View>
-            <View style={style.formRow}>
-                <Button block style={style.submit} onPress={handleSubmit}>
-                    <Text uppercase={false} style={{ fontSize: 16 }}>Save</Text>
-                </Button>
-            </View>
+                <Item regular style={[style.formItem, style.noBorder]}>
+                    <Button style={style.submitBtn} onPress={handleSubmit}>
+                        <Text uppercase={false} style={style.submitText}>Save</Text>
+                    </Button>
+                </Item>
+            </Form>
         </View>
     )
 }

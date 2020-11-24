@@ -6,6 +6,7 @@ import { Button, Container, Content, Text, Grid, Row, Col } from 'native-base';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Income from './Income';
 import Expanse from './Expanse';
+import ViewExpanses from './ViewExpanses';
 
 const windowWidth = Dimensions.get("window").width;
 
@@ -62,7 +63,7 @@ const HomeScreen = ({ navigation }) => {
         navigation.navigate("Expanse");
     }
     const viewTransations = () => {
-        console.log("View Transactions");
+        navigation.navigate("ViewExpanses");
     }
     return (
         <Container style={style.container}>
@@ -182,6 +183,13 @@ const App = () => {
                     component={Income}
                     options={{
                         title: "Add Income"
+                    }}
+                />
+                <Stack.Screen
+                    name="ViewExpanses"
+                    component={ViewExpanses}
+                    options={{
+                        title: "View Expanses"
                     }}
                 />
             </Stack.Navigator>

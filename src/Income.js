@@ -10,7 +10,7 @@ const style = StyleSheet.create({
     },
 });
 
-const Income = ({ navigation, route }) => {
+const Income = () => {
     return (
         <Container style={style.container}>
             <Content>

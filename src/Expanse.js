@@ -10,7 +10,7 @@ const style = StyleSheet.create({
     },
 });
 
-const AddExpanse = ({ navigation, route }) => {
+const AddExpanse = () => {
     return (
         <Container style={style.container}>
             <Content>
