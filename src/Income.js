@@ -11,14 +11,10 @@ const style = StyleSheet.create({
 });
 
 const Income = ({ navigation, route }) => {
-    const addIncome = item => {
-        console.log(item);
-    }
-
     return (
         <Container style={style.container}>
             <Content>
-                <ItemForm type="income" onSubmit={addIncome} />
+                <ItemForm type="income" />
             </Content>
         </Container>
     )

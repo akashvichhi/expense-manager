@@ -50,15 +50,29 @@ const ItemForm = ({ type }) => {
     const now = new Date();
     const date = Functions.getFormattedDate(now);
     const time = Functions.getFormattedTime(now);
+    const datetime = Functions.getFormattedDateTime(now);
 
     const [item, setItem] = useState({
-        datetime: now,
+        timestamp: now,
+        datetime: datetime,
         date: date,
         time: time,
         amount: "",
         description: "",
         type: type == "income" ? "income" : "expanse",
     });
+
+    const emptyItem = () => {
+        setItem({
+            timestamp: now,
+            datetime: datetime,
+            date: date,
+            time: time,
+            amount: "",
+            description: "",
+            type: type == "income" ? "income" : "expanse",
+        });
+    }
 
     const [showDatePicker, setDatePicker] = useState(false);
     const [showTimePicker, setTimePicker] = useState(false);
@@ -75,8 +89,9 @@ const ItemForm = ({ type }) => {
         setDatePicker(false);
         if(event.type == "set") {
             const temp = item;
-            temp['datetime'] = selectedDate;
+            temp['timestamp'] = selectedDate;
             temp['date'] = Functions.getFormattedDate(new Date(selectedDate));
+            temp['datetime'] = Functions.getFormattedDateTime(new Date(selectedDate));
             setItem({ ...temp });
         }
     }
@@ -86,19 +101,26 @@ const ItemForm = ({ type }) => {
         setTimePicker(false);
         if(event.type == "set") {
             const temp = item;
-            temp['datetime'] = selectedTime;
+            temp['timestamp'] = selectedTime;
             temp['time'] = Functions.getFormattedTime(new Date(selectedTime));
+            temp['datetime'] = Functions.getFormattedDateTime(new Date(selectedTime));
             setItem({ ...temp });
         }
     }
 
     const handleSubmit = () => {
-        console.log(item);
         if(item.amount == "") {
             setError("Please enter amount");
         }
         else {
             setError("");
+            Functions.addItem(item).then(() => {
+                Functions.showToastMessage("Item saved");
+                emptyItem();
+            }).catch(error => {
+                Functions.showToastMessage(error);
+                emptyItem();
+            });
         }
     }
 
@@ -118,7 +140,7 @@ const ItemForm = ({ type }) => {
             </View>
             <View style={style.formRow}>
                 {showDatePicker && <DatePicker
-                    value={item.datetime}
+                    value={item.timestamp}
                     onChange={setDate}
                 />}
                 <Button block transparent style={[style.input, style.dateBtn]} onPress={() => setDatePicker(true)}>
@@ -128,7 +150,7 @@ const ItemForm = ({ type }) => {
             </View>
             <View style={style.formRow}>
                 {showTimePicker && <DatePicker
-                    value={item.datetime}
+                    value={item.timestamp}
                     onChange={setTime}
                     mode="time"
                     display="clock"

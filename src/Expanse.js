@@ -11,14 +11,10 @@ const style = StyleSheet.create({
 });
 
 const AddExpanse = ({ navigation, route }) => {
-    const addExpanse = item => {
-        console.log(item);
-    }
-
     return (
         <Container style={style.container}>
             <Content>
-                <ItemForm type="expanse" onSubmit={addExpanse} />
+                <ItemForm type="expanse" />
             </Content>
         </Container>
     )
