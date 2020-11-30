@@ -4,6 +4,7 @@ import { Button, Text, Form, Input, Textarea, Item } from 'native-base';
 import DatePicker from '@react-native-community/datetimepicker';
 import Fontisto from 'react-native-vector-icons/Fontisto';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import moment from 'moment';
 import Functions from './Functions';
 
 const style = StyleSheet.create({
@@ -26,9 +27,11 @@ const style = StyleSheet.create({
         borderRightWidth: 0,
     },
     submitBtn: {
-        backgroundColor: "#7b7f9c",
         borderRadius: 5,
         flex: 1,
+    },
+    saveBtn: {
+        backgroundColor: "#7b7f9c",
     },
     submitText: {
         fontSize: 16,
@@ -55,30 +58,36 @@ const style = StyleSheet.create({
         fontSize: 16,
         paddingLeft: 15,
     },
+    trasactionType: {
+        marginTop: 10,
+    },
 });
 
-const ItemForm = ({ type }) => {
-    const now = new Date();
-    const date = Functions.getFormattedDate(now);
-    const time = Functions.getFormattedTime(now);
-    const datetime = Functions.getFormattedDateTime(now);
+const ItemForm = ({ type, itemData = {}, editForm = false, navigation = null }) => {
+    const now = itemData.datetime ? new Date(Number(itemData.datetime)) : new Date();
+    const formattedDate = Functions.getFormattedDate(now);
+    const formattedTime = Functions.getFormattedTime(now);
+    const monthYear = Functions.getMonthYear(now);
+    const date = Functions.getDate(now);
 
     const [item, setItem] = useState({
-        timestamp: now,
-        datetime: datetime,
+        datetime: now.getTime(),
+        formattedDate: formattedDate,
+        formattedTime: formattedTime,
+        month: monthYear,
         date: date,
-        time: time,
-        amount: "",
-        description: "",
+        amount: itemData.amount ? itemData.amount.toString() : "",
+        description: itemData.description ? itemData.description : "",
         type: type == "income" ? "income" : "expanse",
     });
 
     const emptyItem = () => {
         setItem({
-            timestamp: now,
-            datetime: datetime,
+            datetime: now.getTime(),
+            formattedDate: formattedDate,
+            formattedTime: formattedTime,
+            month: monthYear,
             date: date,
-            time: time,
             amount: "",
             description: "",
             type: type == "income" ? "income" : "expanse",
@@ -98,9 +107,10 @@ const ItemForm = ({ type }) => {
         setDatePicker(false);
         if(event.type == "set") {
             const temp = item;
-            temp['timestamp'] = selectedDate;
-            temp['date'] = Functions.getFormattedDate(new Date(selectedDate));
-            temp['datetime'] = Functions.getFormattedDateTime(new Date(selectedDate));
+            temp['datetime'] = new Date(selectedDate).getTime();
+            temp['formattedDate'] = Functions.getFormattedDate(new Date(selectedDate));
+            temp['date'] = Functions.getDate(new Date(selectedDate));
+            temp['month'] = Functions.getMonthYear(new Date(selectedDate));
             setItem({ ...temp });
         }
     }
@@ -109,9 +119,8 @@ const ItemForm = ({ type }) => {
         setTimePicker(false);
         if(event.type == "set") {
             const temp = item;
-            temp['timestamp'] = selectedTime;
-            temp['time'] = Functions.getFormattedTime(new Date(selectedTime));
-            temp['datetime'] = Functions.getFormattedDateTime(new Date(selectedTime));
+            temp['datetime'] = new Date(selectedTime).getTime();
+            temp['formattedTime'] = Functions.getFormattedTime(new Date(selectedTime));
             setItem({ ...temp });
         }
     }
@@ -121,18 +130,40 @@ const ItemForm = ({ type }) => {
             Functions.showToastMessage("Please enter amount");
         }
         else {
-            Functions.addItem(item).then(() => {
-                Functions.showToastMessage("Item saved");
-                emptyItem();
-            }).catch(error => {
-                Functions.showToastMessage(error);
-                emptyItem();
-            });
+            if(editForm) {
+                Functions.updateItem(itemData.id, item).then(() => {
+                    Functions.showToastMessage("Item saved");
+                    navigation.goBack();
+                }).catch(error => {
+                    Functions.showToastMessage(error);
+                });
+            }
+            else {
+                Functions.addItem(item).then(() => {
+                    Functions.showToastMessage("Item saved");
+                    emptyItem();
+                }).catch(error => {
+                    Functions.showToastMessage(error);
+                    emptyItem();
+                });
+            }
         }
+    }
+
+    const deleteItem = () => {
+        Functions.deleteItem(itemData.id)
+            .then(() => {
+                Functions.showToastMessage("Item deleted");
+                navigation.goBack();
+            })
+            .catch(error => {
+                Functions.showToastMessage(error);
+            });
     }
 
     return (
         <View style={style.form}>
+            {editForm && <Text style={style.trasactionType}>Transaction type: {type}</Text>}
             <Form>
                 <Item regular style={style.formItem}>
                     <Input
@@ -144,17 +175,17 @@ const ItemForm = ({ type }) => {
                 </Item>
                 <Item regular style={[style.formItem, style.noBorder]}>
                     {showDatePicker && <DatePicker
-                        value={item.timestamp}
+                        value={item.datetime}
                         onChange={setDate}
                     />}
                     <Button block transparent style={style.dateBtn} onPress={() => setDatePicker(true)}>
                         <Fontisto name="date" size={20} style={style.icon} />
-                        <Text uppercase={false} style={style.dateText}>{item.date}</Text>
+                        <Text uppercase={false} style={style.dateText}>{item.formattedDate}</Text>
                     </Button>
                 </Item>
                 <Item regular style={[style.formItem, style.noBorder]}>
                     {showTimePicker && <DatePicker
-                        value={item.timestamp}
+                        value={item.datetime}
                         onChange={setTime}
                         mode="time"
                         display="clock"
@@ -162,7 +193,7 @@ const ItemForm = ({ type }) => {
                     />}
                     <Button block transparent style={style.dateBtn} onPress={() => setTimePicker(true)}>
                         <Ionicons name="time-outline" size={24} style={[style.icon, { marginRight: 6 }]} />
-                        <Text uppercase={false} style={style.dateText}>{item.time}</Text>
+                        <Text uppercase={false} style={style.dateText}>{item.formattedTime}</Text>
                     </Button>
                 </Item>
                 <Textarea
@@ -173,10 +204,17 @@ const ItemForm = ({ type }) => {
                     style={[style.formItem, style.textarea]}
                 />
                 <Item regular style={[style.formItem, style.noBorder]}>
-                    <Button style={style.submitBtn} onPress={handleSubmit}>
+                    <Button style={[style.submitBtn, style.saveBtn]} onPress={handleSubmit}>
                         <Text uppercase={false} style={style.submitText}>Save</Text>
                     </Button>
                 </Item>
+                {editForm &&
+                    <Item regular style={[style.formItem, style.noBorder]}>
+                        <Button danger style={style.submitBtn} onPress={deleteItem}>
+                            <Text uppercase={false} style={style.submitText}>Delete</Text>
+                        </Button>
+                    </Item>
+                }
             </Form>
         </View>
     )

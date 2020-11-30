@@ -18,6 +18,8 @@ target 'ExpanseManager' do
 
   pod 'RNDateTimePicker', :path => '../node_modules/@react-native-community/datetimepicker'
 
+  pod 'RNCPicker', :path => '../node_modules/@react-native-picker/picker'
+
   target 'ExpanseManagerTests' do
     inherit! :complete
     # Pods for testing
