@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Modal, ActivityIndicator } from 'react-native';
-import { Container, Content, Text, Button, ListItem, List, Body, Icon, Left, Right, Grid, Row, Col } from 'native-base';
+import { View, StyleSheet, Modal, ActivityIndicator, Alert } from 'react-native';
+import { Container, Content, Text, Button, ListItem, List, Body, Icon, Left, Right, Grid, Row, Col, Footer } from 'native-base';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Functions from './Functions';
 import { useFocusEffect } from '@react-navigation/native';
@@ -56,7 +56,7 @@ const style = StyleSheet.create({
         marginTop: 10,
         textAlign: "center",
     },
-    expansesList: {
+    expensesList: {
         marginTop: 10,
     },
     monthTitle: {
@@ -76,7 +76,7 @@ const style = StyleSheet.create({
     amountIcon: {
         fontSize: 16,
     },
-    typeExpanse: {
+    typeexpense: {
         color: "#f00",
     },
     typeIncome: {
@@ -97,6 +97,17 @@ const style = StyleSheet.create({
         borderColor: "#c9c9c9",
         justifyContent: "center",
         width: 50,
+    },
+    footer: {
+        height: "auto",
+    },
+    footerBtn: {
+        backgroundColor: "#808080",
+        borderRadius: 0,
+    },
+    firstBtn: {
+        borderRightWidth: 1,
+        borderColor: "#fff",
     },
 });
 
@@ -147,25 +158,25 @@ const SortOptionsModal = ({ visible, onClose, onApply }) => {
     )
 }
 
-const RenderExpanses = ({ expanses, selectedDateRange, editExpanse }) => {
+const Renderexpenses = ({ expenses, selectedDateRange, editExpense }) => {
     let totalIncome = 0;
-    let totalExpanse = 0;
+    let totalexpense = 0;
     let totalBalance = 0;
 
-    // count total income, expanse and balance
-    Object.keys(expanses).map(date => {
-        const transaction = expanses[date];
+    // count total income, expense and balance
+    Object.keys(expenses).map(date => {
+        const transaction = expenses[date];
         transaction.map(t => {
             if(t.type == "income") {
                 totalIncome += t.amount;
             }
             else {
-                totalExpanse += t.amount;
+                totalexpense += t.amount;
             }
         });
     });
 
-    totalBalance = totalIncome - totalExpanse;
+    totalBalance = totalIncome - totalexpense;
 
     const dateRangeText = selectedDateRange == sortOptions.all ? "" : " for " + selectedDateRange;
 
@@ -183,10 +194,10 @@ const RenderExpanses = ({ expanses, selectedDateRange, editExpanse }) => {
                 </Row>
                 <Row style={{ marginTop: 10 }}>
                     <Col>
-                        <Text style={[style.typeExpanse, style.itemTitle]}>Total Expanse</Text>
+                        <Text style={[style.typeexpense, style.itemTitle]}>Total expense</Text>
                     </Col>
                     <Col>
-                        <Text style={[style.typeExpanse, style.itemAmount]}>{totalExpanse}</Text>
+                        <Text style={[style.typeexpense, style.itemAmount]}>{totalexpense}</Text>
                     </Col>
                 </Row>
                 <Row style={{ marginTop: 10 }}>
@@ -198,10 +209,10 @@ const RenderExpanses = ({ expanses, selectedDateRange, editExpanse }) => {
                     </Col>
                 </Row>
             </Grid>
-            {Object.keys(expanses).length > 0 ?
-                <List style={style.expansesList}>
-                    {Object.keys(expanses).map(monthYear => {
-                        const transactions = expanses[monthYear];
+            {Object.keys(expenses).length > 0 ?
+                <List style={style.expensesList}>
+                    {Object.keys(expenses).map(monthYear => {
+                        const transactions = expenses[monthYear];
                         return (
                             <>
                                 <ListItem itemDivider style={style.monthTitle}>
@@ -216,11 +227,11 @@ const RenderExpanses = ({ expanses, selectedDateRange, editExpanse }) => {
                                                         <Text style={style.transactionDate}>{t.date}</Text>
                                                     </Col>
                                                     <Col>
-                                                        <Text style={t.type == 'expanse' ? style.typeExpanse : style.typeIncome}>
+                                                        <Text style={t.type == 'expense' ? style.typeexpense : style.typeIncome}>
                                                             <Icon
                                                                 name="rupee"
                                                                 type="FontAwesome"
-                                                                style={[style.amountIcon, t.type == 'expanse' ? style.typeExpanse : style.typeIncome ]}
+                                                                style={[style.amountIcon, t.type == 'expense' ? style.typeexpense : style.typeIncome ]}
                                                             /> {t.amount}
                                                         </Text>
                                                         <Text note>{t.description}</Text>
@@ -231,7 +242,7 @@ const RenderExpanses = ({ expanses, selectedDateRange, editExpanse }) => {
                                                 <Button
                                                     transparent icon
                                                     style={style.transactionAction}
-                                                    onPress={() => editExpanse(t.id)}
+                                                    onPress={() => editExpense(t.id)}
                                                 >
                                                     <Icon name="edit" type="Feather" style={{ color: "#808080" }} />
                                                 </Button>
@@ -244,17 +255,17 @@ const RenderExpanses = ({ expanses, selectedDateRange, editExpanse }) => {
                     })}
                 </List>
             :
-                <Text style={style.emptyText}>No expanses</Text>
+                <Text style={style.emptyText}>No expenses</Text>
             }
         </>
     )
 }
 
-const ViewExpanses = ({ navigation }) => {
+const Viewexpenses = ({ navigation }) => {
     const [showSortOptions, setShowSortOptions] = useState(false);
     const [selectedOption, setSelectedOption] = useState(sortOptions.all);
 
-    const [expanses, setExpanses] = useState({});
+    const [expenses, setExpenses] = useState({});
 
     const loadItems = (sort = sortOptions.all) => {
         let startDate = "";
@@ -283,7 +294,7 @@ const ViewExpanses = ({ navigation }) => {
             where = "datetime >= '" + startDate + "' AND datetime < '" + endDate + "'";
         }
         
-        Functions.getItems(where).then(result => setExpanses(result)).catch(error => console.error(error));
+        Functions.getItems(where).then(result => setExpenses(result)).catch(error => console.error(error));
     }
 
     useFocusEffect(
@@ -299,10 +310,29 @@ const ViewExpanses = ({ navigation }) => {
         setSelectedOption(option);
     }
 
-    const editExpanse = id => navigation.navigate("EditExpanse", { itemId: id })
+    const editExpense = id => navigation.navigate("EditExpense", { itemId: id })
+
+    const savePdf = () => {
+        Functions.savePdf(expenses)
+            .then(filename => {
+                Alert.alert(
+                    "Expense Manager",
+                    "File Downloaded as " + filename,
+                    [{
+                        text: "Ok",
+                    },{
+                        text: "Open",
+                        onPress: () => Functions.openFile(filename),
+                    }],
+                    { cancelable: true }
+                );
+            })
+            .catch(error => console.error(error))
+    }
 
     return (
         <Container style={style.container}>
+            
             <View style={style.header}>
                 <Button block style={style.sortBtn} onPress={() => setShowSortOptions(true)}>
                     <FontAwesome name="sort" size={16} color="#fff" />
@@ -315,16 +345,32 @@ const ViewExpanses = ({ navigation }) => {
                     onClose={() => setShowSortOptions(false)}
                     onApply={applyOption}
                 />
-                {Object.keys(expanses).length > 0 ?
-                    <RenderExpanses
-                        expanses={expanses}
+                {Object.keys(expenses).length > 0 ?
+                    <Renderexpenses
+                        expenses={expenses}
                         selectedDateRange={selectedOption}
-                        editExpanse={editExpanse}
+                        editExpense={editExpense}
                     />
                 : <View style={{ marginTop: 15 }}><ActivityIndicator color="#000" /></View>}
             </Content>
+            <Footer style={style.footer}>
+                <Body>
+                    <Row>
+                        <Col>
+                            <Button block style={[style.footerBtn, style.firstBtn]} onPress={savePdf}>
+                                <Text uppercase={false}>Save as PDF</Text>
+                            </Button>
+                        </Col>
+                        <Col>
+                            <Button block style={style.footerBtn}>
+                                <Text uppercase={false}>Save as Excel</Text>
+                            </Button>
+                        </Col>
+                    </Row>
+                </Body>
+            </Footer>
         </Container>
     )
 }
 
-export default ViewExpanses;
+export default Viewexpenses;

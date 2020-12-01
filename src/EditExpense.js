@@ -11,7 +11,7 @@ const style = StyleSheet.create({
     },
 });
 
-const EditExpanse = props => {
+const Editexpense = props => {
     const [item, setItem] = useState({});
     
     useEffect(() => {
@@ -35,4 +35,4 @@ const EditExpanse = props => {
     )
 }
 
-export default EditExpanse;
+export default Editexpense;

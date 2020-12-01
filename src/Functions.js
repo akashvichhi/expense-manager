@@ -1,6 +1,14 @@
 import React from 'react';
 import { ToastAndroid } from 'react-native';
+import RNHTMLtoPDF from 'react-native-html-to-pdf';
+import FileViewer from 'react-native-file-viewer';
 var SQLite = require("react-native-sqlite-storage");
+var RNFS = require("react-native-fs");
+
+const DOWNLOAD_PATH =  RNFS.ExternalStorageDirectoryPath + "/Expense Manager/";
+const TABLE_NAME = "expanses";
+
+RNFS.mkdir(DOWNLOAD_PATH).catch(error => console.error(error));
 
 var DB = SQLite.openDatabase({
   name: "expansemanager",
@@ -81,6 +89,97 @@ const getMonthDates = (dateObj, monthDiff = 0) => {
     return [startDate, endDate];
 }
 
+const generateHtml = expense => {
+    let counter = 1;
+    let html = `
+        <style type="text/css">
+            .main {
+                font-family: sans-serif;
+                margin: auto;
+                width: 720px;
+            }
+            h2 {
+                text-align: center;
+            }
+            .main-table {
+                border: solid 1px;
+                border-collapse: collapse;
+                font-size: 14px;
+                text-align: center;
+                width: 100%;
+            }
+            .main-table td, .main-table th {
+                border: solid 1px;
+                padding: 8px;
+            }
+            .main-table th {
+                background-color: rgba(170, 170, 170);
+            }
+            .main-table tbody tr:nth-child(even) {
+                background-color: rgba(231, 231, 231);
+            }
+        </style>
+
+        <div class="main">
+            <h2>Expense Manager</h2>
+            <table class="main-table">
+                <thead>
+                    <tr>
+                        <th>Sr no.</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Income</th>
+                        <th>Expense</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+    Object.keys(expense).map(date => {
+        html += `<tr><td colspan="6" style="font-weight: 600;">${date}</td></tr>`;
+        const transaction = expense[date];
+        transaction.map(t => {
+            html += `
+                <tr>
+                    <td>${counter++}</td>
+                    <td>${getFormattedDate(new Date(Number(t.datetime)))}</td>
+                    <td>${getFormattedTime(new Date(Number(t.datetime)))}</td>
+                    <td>${t.type == "income" ? t.amount : ""}</td>
+                    <td>${t.type == "expense" ? t.amount : ""}</td>
+                    <td>${t.description}</td>
+                </tr>
+            `;
+        });
+    });
+
+    html += `
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    return html.trim();
+}
+
+const getFilename = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = getMonth(today);
+    const date = getDate(today);
+    const hours = today.getHours();
+    const minutes = today.getMinutes();
+
+    return `EM_${year}_${month}_${date}_${hours}_${minutes}`;
+}
+
+const openFile = path => {
+    FileViewer.open(path).catch(error => {
+        console.error(error);
+        showToastMessage("Could not open file " + path);
+    })
+}
+
 class Functions extends React.Component {
     static getDate = dateObj => getDate(dateObj)
     static getMonthYear = dateObj => {
@@ -111,11 +210,11 @@ class Functions extends React.Component {
 
     static getThisMonthSummary = () => new Promise((resolve) => {
         const [startDate, endDate] = getMonthDates(new Date());
-        const sql = "SELECT * FROM expanses WHERE datetime >= '" + startDate + "' AND datetime < '" + endDate + "'";
+        const sql = "SELECT * FROM " + TABLE_NAME + " WHERE datetime >= '" + startDate + "' AND datetime < '" + endDate + "'";
         DB.transaction((tx) => {
             tx.executeSql(sql, [], (tx, results) => {
                 let totalIncome = 0;
-                let totalExpanse = 0;
+                let totalExpense = 0;
                 let totalBalance = 0;
 
                 for(let i = 0; i < (results.rows.length); i++) {
@@ -124,18 +223,18 @@ class Functions extends React.Component {
                         totalIncome += item.amount;
                     }
                     else {
-                        totalExpanse += item.amount;
+                        totalExpense += item.amount;
                     }
                 }
-                totalBalance = totalIncome - totalExpanse;
-                resolve({ income: totalIncome, expense: totalExpanse, balance: totalBalance });
+                totalBalance = totalIncome - totalexpense;
+                resolve({ income: totalIncome, expense: totalExpense, balance: totalBalance });
             });
         });
     })
 
     static addItem = item => new Promise((resolve, reject) => {
         // datetime format stored in DB: 'd-m-Y H:i'
-        const sql = `INSERT INTO expanses ('amount', 'description', 'month', 'date', 'datetime', 'type') VALUES (${item.amount}, '${item.description}', '${item.month}', '${item.date}', '${item.datetime}', '${item.type}')`;
+        const sql = `INSERT INTO ${TABLE_NAME} ('amount', 'description', 'month', 'date', 'datetime', 'type') VALUES (${item.amount}, '${item.description}', '${item.month}', '${item.date}', '${item.datetime}', '${item.type}')`;
         DB.transaction((tx) => {
             tx.executeSql(sql, [], (tx, results) => {
                 if(results.insertId > 0) {
@@ -147,7 +246,7 @@ class Functions extends React.Component {
     })
 
     static getItems = (where = "") => new Promise((resolve) => {
-        const sql = "SELECT * FROM expanses" + (where ? " WHERE " + where : "") + " ORDER BY datetime DESC";
+        const sql = "SELECT * FROM " + TABLE_NAME + "" + (where ? " WHERE " + where : "") + " ORDER BY datetime DESC";
         DB.transaction((tx) => {
             tx.executeSql(sql, [], (tx, results) => {
                 let items = {};
@@ -166,7 +265,7 @@ class Functions extends React.Component {
     })
 
     static getItem = id => new Promise((resolve) => {
-        const sql = "SELECT * FROM expanses WHERE id = " + id;
+        const sql = "SELECT * FROM " + TABLE_NAME + " WHERE id = " + id;
         DB.transaction((tx) => {
             tx.executeSql(sql, [], (tx, results) => {
                 const item = results.rows.item(0);
@@ -176,7 +275,7 @@ class Functions extends React.Component {
     })
 
     static updateItem = (id, item) => new Promise((resolve) => {
-        const sql = `UPDATE expanses SET amount=${item.amount}, description='${item.description}', month='${item.month}', date='${item.date}', datetime='${item.datetime}' WHERE id = ${id}`;
+        const sql = `UPDATE ${TABLE_NAME} SET amount=${item.amount}, description='${item.description}', month='${item.month}', date='${item.date}', datetime='${item.datetime}' WHERE id = ${id}`;
         DB.transaction((tx) => {
             tx.executeSql(sql, [], (tx, results) => {
                 resolve(true);
@@ -187,7 +286,7 @@ class Functions extends React.Component {
     })
 
     static deleteItem = id => new Promise((resolve) => {
-        const sql = "DELETE FROM expanses WHERE id = " + id;
+        const sql = "DELETE FROM " + TABLE_NAME + " WHERE id = " + id;
         DB.transaction((tx) => {
             tx.executeSql(sql, [], (tx, results) => {
                 resolve(true);
@@ -196,6 +295,34 @@ class Functions extends React.Component {
     })
 
     static showToastMessage = (message, long = false) => showToastMessage(message, long)
+
+    static savePdf = expense => new Promise(async (resolve, reject) => {
+        try {
+            const html = generateHtml(expense);
+            const filename = getFilename();
+            const options = {
+                html: html,
+                fileName: filename,
+                directory: "Expense Manager",
+                height: 780,
+                width: 780,
+            }
+            await RNHTMLtoPDF.convert(options);
+            resolve(filename + ".pdf");
+        }
+        catch(error) {
+            showToastMessage("Could not save file");
+            reject(error);
+        }
+    })
+
+    static saveExcel = expense => {
+        new Promise((resolve, reject) => {
+            resolve();
+        })
+    } 
+
+    static openFile = filename => openFile(DOWNLOAD_PATH + filename)
 }
 
 export default Functions;

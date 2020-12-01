@@ -5,9 +5,9 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { Root, Button, Container, Content, Text, Grid, Row, Col } from 'native-base';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import AddIncome from './AddIncome';
-import AddExpanse from './AddExpanse';
-import EditExpanse from './EditExpanse';
-import ViewExpanses from './ViewExpanses';
+import AddExpense from './AddExpense';
+import EditExpense from './EditExpense';
+import ViewExpenses from './ViewExpenses';
 import Functions from './Functions';
 
 const windowWidth = Dimensions.get("window").width;
@@ -19,7 +19,7 @@ const style = StyleSheet.create({
         paddingHorizontal: 10,
         paddingTop: 10,
     },
-    typeExpanse: {
+    typeexpense: {
         color: "#f00",
     },
     typeIncome: {
@@ -81,11 +81,11 @@ const HomeScreen = ({ navigation }) => {
     const addIncome = () => {
         navigation.navigate("AddIncome");
     }
-    const addExpanse = () => {
-        navigation.navigate("AddExpanse");
+    const addExpense = () => {
+        navigation.navigate("AddExpense");
     }
     const viewTransations = () => {
-        navigation.navigate("ViewExpanses");
+        navigation.navigate("ViewExpenses");
     }
     return (
         <Container style={style.container}>
@@ -102,10 +102,10 @@ const HomeScreen = ({ navigation }) => {
                     </Row>
                     <Row style={{ marginTop: 10 }}>
                         <Col>
-                            <Text style={[style.typeExpanse, style.itemTitle]}>Expense</Text>
+                            <Text style={[style.typeexpense, style.itemTitle]}>Expense</Text>
                         </Col>
                         <Col>
-                            <Text style={[style.typeExpanse, style.itemAmount]}>{expense}</Text>
+                            <Text style={[style.typeexpense, style.itemAmount]}>{expense}</Text>
                         </Col>
                     </Row>
                     <Row style={{ marginTop: 10 }}>
@@ -121,7 +121,7 @@ const HomeScreen = ({ navigation }) => {
                     <Button block style={style.button} onPress={addIncome}>
                         <Text uppercase={false} style={style.buttonText}>Add Income</Text>
                     </Button>
-                    <Button block style={style.button} onPress={addExpanse}>
+                    <Button block style={style.button} onPress={addExpense}>
                         <Text uppercase={false} style={style.buttonText}>Add Expense</Text>
                     </Button>
                     <Button block style={style.button} onPress={viewTransations}>
@@ -196,10 +196,10 @@ const App = () => {
                         }}
                     />
                     <Stack.Screen
-                        name="AddExpanse"
-                        component={AddExpanse}
+                        name="AddExpense"
+                        component={AddExpense}
                         options={{
-                            title: "Add Expanse"
+                            title: "Add Expense"
                         }}
                     />
                     <Stack.Screen
@@ -210,15 +210,15 @@ const App = () => {
                         }}
                     />
                     <Stack.Screen
-                        name="ViewExpanses"
-                        component={ViewExpanses}
+                        name="ViewExpenses"
+                        component={ViewExpenses}
                         options={{
                             title: "View Expenses"
                         }}
                     />
                     <Stack.Screen
-                        name="EditExpanse"
-                        component={EditExpanse}
+                        name="EditExpense"
+                        component={EditExpense}
                         options={{
                             title: "Edit Transaction"
                         }}

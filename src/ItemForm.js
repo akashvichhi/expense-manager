@@ -4,7 +4,6 @@ import { Button, Text, Form, Input, Textarea, Item } from 'native-base';
 import DatePicker from '@react-native-community/datetimepicker';
 import Fontisto from 'react-native-vector-icons/Fontisto';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import moment from 'moment';
 import Functions from './Functions';
 
 const style = StyleSheet.create({
@@ -78,7 +77,7 @@ const ItemForm = ({ type, itemData = {}, editForm = false, navigation = null }) 
         date: date,
         amount: itemData.amount ? itemData.amount.toString() : "",
         description: itemData.description ? itemData.description : "",
-        type: type == "income" ? "income" : "expanse",
+        type: type == "income" ? "income" : "expense",
     });
 
     const emptyItem = () => {
@@ -90,7 +89,7 @@ const ItemForm = ({ type, itemData = {}, editForm = false, navigation = null }) 
             date: date,
             amount: "",
             description: "",
-            type: type == "income" ? "income" : "expanse",
+            type: type == "income" ? "income" : "expense",
         });
     }
 

@@ -14,7 +14,7 @@ const AddExpanse = () => {
     return (
         <Container style={style.container}>
             <Content>
-                <ItemForm type="expanse" />
+                <ItemForm type="expense" />
             </Content>
         </Container>
     )

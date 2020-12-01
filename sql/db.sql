@@ -1,8 +1,8 @@
--- DB: expanses
+-- DB: expenses
 
--- type => enum('expanse', 'income')
+-- type => enum('expense', 'income')
 
-CREATE TABLE "expanses" (
+CREATE TABLE "expenses" (
 	"id"	INTEGER PRIMARY KEY AUTOINCREMENT,
 	"amount"	NUMERIC NOT NULL,
 	"description"	TEXT,

@@ -20,6 +20,8 @@ target 'ExpanseManager' do
 
   pod 'RNCPicker', :path => '../node_modules/@react-native-picker/picker'
 
+  pod 'RNFileViewer', :path => '../node_modules/react-native-file-viewer'
+
   target 'ExpanseManagerTests' do
     inherit! :complete
     # Pods for testing
