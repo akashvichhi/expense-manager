@@ -316,18 +316,34 @@ class Functions extends React.Component {
         }
     })
 
-    // static saveExcel = data => new Promise((resolve, reject) => {
-    //     const filename = getFilename() + ".xslx";
-    //     RNFS.writeFile(DOWNLOAD_PATH + filename, data, "binary")
-    //         .then(() => {
-    //             resolve(filename);
-    //         })
-    //         .catch(e => {
-    //             showToastMessage("Could not save as excel file")
-    //             console.log("Error")
-    //             reject(e);
-    //         });
-    // })
+    static saveCSV = expenses => new Promise((resolve, reject) => {
+        let csvString = "Sr No,Date,Time,Income,Expense,Description\n";
+        // construct csvString
+        for(let date in expenses) {
+            let exp = expenses[date];
+            let header = date + "\n";
+            let row = header;
+            exp.forEach((e, i) => {
+                let date = Functions.getFormattedDate(new Date(Number(e.datetime)));
+                let time = Functions.getFormattedTime(new Date(Number(e.datetime)));
+                let income = e.type == "income" ? e.amount : "";
+                let expense = e.type == "expense" ? e.amount : "";
+                row += `${(i+1)},${date},${time},${income},${expense},${e.description}\n`;
+            });
+            csvString += row + "\n";
+        }
+
+        const filename = getFilename() + ".csv";
+        RNFS.writeFile(DOWNLOAD_PATH + filename, csvString)
+            .then(() => {
+                resolve(filename);
+            })
+            .catch(e => {
+                showToastMessage("Could not save csv file")
+                console.log("Error")
+                reject(e);
+            });
+    })
 
     static openFile = filename => openFile(DOWNLOAD_PATH + filename)
 }

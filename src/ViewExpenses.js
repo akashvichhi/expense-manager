@@ -345,33 +345,25 @@ const Viewexpenses = ({ navigation }) => {
             .catch(error => console.error(error))
     }
 
-    const saveExcel = () => {
-        const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
-        const fileExtension = '.xlsx';
-        // console.log(Object.values(expenses));
-        const ws = XLSX.utils.json_to_sheet(Object.values(expenses));
-        const wb = { Sheets: { 'data': ws }, SheetNames: ['Expense'] };
-        const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: "binary" });
-        // const data = new Blob([excelBuffer], {type: fileType});
-        // console.log(excelBuffer)
-        
+    const saveCSV = () => {
         setScreenLoading(true);
-        Functions.saveExcel(excelBuffer)
-            .then(filename => {
-                setScreenLoading(false);
-                Alert.alert(
-                    "Expense Manager",
-                    "File Downloaded as " + filename,
-                    [{
-                        text: "Ok",
-                    },{
-                        text: "Open",
-                        onPress: () => Functions.openFile(filename),
-                    }],
-                    { cancelable: true }
-                );
-            })
-            .catch(error => console.error(error))
+        Functions.saveCSV(expenses).then(filename => {
+            setScreenLoading(false);
+            Alert.alert(
+                "Expense Manager",
+                "File Downloaded as " + filename,
+                [{
+                    text: "Ok",
+                },{
+                    text: "Open",
+                    onPress: () => Functions.openFile(filename),
+                }],
+                { cancelable: true }
+            );
+        }).catch(e => {
+            setScreenLoading(false);
+            console.log(e);
+        });
     }
 
     return (
@@ -417,11 +409,11 @@ const Viewexpenses = ({ navigation }) => {
                                 <Text uppercase={false}>Save as PDF</Text>
                             </Button>
                         </Col>
-                        {/* <Col>
-                            <Button block style={[style.footerBtn, style.secondBtn]} onPress={saveExcel}>
-                                <Text uppercase={false}>Save as Excel</Text>
+                        <Col>
+                            <Button block style={[style.footerBtn, style.secondBtn]} onPress={saveCSV}>
+                                <Text uppercase={false}>Save as CSV</Text>
                             </Button>
-                        </Col> */}
+                        </Col>
                     </Row>
                 </Body>
             </Footer>
