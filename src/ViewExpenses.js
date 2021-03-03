@@ -4,6 +4,7 @@ import { Container, Content, Text, Button, ListItem, List, Body, Icon, Left, Rig
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Functions from './Functions';
 import { useFocusEffect } from '@react-navigation/native';
+import * as XLSX from 'xlsx';
 
 const style = StyleSheet.create({
     container: {
@@ -29,6 +30,11 @@ const style = StyleSheet.create({
         shadowOffset: { width: 1, height: 1 },
         shadowOpacity: 0.2,
         width: 250,
+    },
+    smallModalBlock: {
+        width: 60,
+        height: 60,
+        justifyContent: "center",
     },
     optionItem: {
         borderBottomWidth: 1,
@@ -105,8 +111,8 @@ const style = StyleSheet.create({
         backgroundColor: "#808080",
         borderRadius: 0,
     },
-    firstBtn: {
-        borderRightWidth: 1,
+    secondBtn: {
+        borderLeftWidth: 1,
         borderColor: "#fff",
     },
 });
@@ -214,7 +220,7 @@ const Renderexpenses = ({ expenses, selectedDateRange, editExpense }) => {
                     {Object.keys(expenses).map(monthYear => {
                         const transactions = expenses[monthYear];
                         return (
-                            <>
+                            <React.Fragment key={monthYear}>
                                 <ListItem itemDivider style={style.monthTitle}>
                                     <Text style={{ color: "#fff" }}>{monthYear}</Text>
                                 </ListItem>
@@ -250,7 +256,7 @@ const Renderexpenses = ({ expenses, selectedDateRange, editExpense }) => {
                                         </ListItem>
                                     )
                                 })}
-                            </>
+                            </React.Fragment>
                         )
                     })}
                 </List>
@@ -264,7 +270,8 @@ const Renderexpenses = ({ expenses, selectedDateRange, editExpense }) => {
 const Viewexpenses = ({ navigation }) => {
     const [showSortOptions, setShowSortOptions] = useState(false);
     const [selectedOption, setSelectedOption] = useState(sortOptions.all);
-
+    const [screenLoading, setScreenLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [expenses, setExpenses] = useState({});
 
     const loadItems = (sort = sortOptions.all) => {
@@ -294,7 +301,13 @@ const Viewexpenses = ({ navigation }) => {
             where = "datetime >= '" + startDate + "' AND datetime < '" + endDate + "'";
         }
         
-        Functions.getItems(where).then(result => setExpenses(result)).catch(error => console.error(error));
+        Functions.getItems(where).then(result => {
+            setExpenses(result);
+            setLoading(false);
+        }).catch(error => {
+            setLoading(false);
+            console.error(error);
+        });
     }
 
     useFocusEffect(
@@ -313,8 +326,39 @@ const Viewexpenses = ({ navigation }) => {
     const editExpense = id => navigation.navigate("EditExpense", { itemId: id })
 
     const savePdf = () => {
+        setScreenLoading(true);
         Functions.savePdf(expenses)
             .then(filename => {
+                setScreenLoading(false);
+                Alert.alert(
+                    "Expense Manager",
+                    "File Downloaded as " + filename,
+                    [{
+                        text: "Ok",
+                    },{
+                        text: "Open",
+                        onPress: () => Functions.openFile(filename),
+                    }],
+                    { cancelable: true }
+                );
+            })
+            .catch(error => console.error(error))
+    }
+
+    const saveExcel = () => {
+        const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
+        const fileExtension = '.xlsx';
+        // console.log(Object.values(expenses));
+        const ws = XLSX.utils.json_to_sheet(Object.values(expenses));
+        const wb = { Sheets: { 'data': ws }, SheetNames: ['Expense'] };
+        const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: "binary" });
+        // const data = new Blob([excelBuffer], {type: fileType});
+        // console.log(excelBuffer)
+        
+        setScreenLoading(true);
+        Functions.saveExcel(excelBuffer)
+            .then(filename => {
+                setScreenLoading(false);
                 Alert.alert(
                     "Expense Manager",
                     "File Downloaded as " + filename,
@@ -332,7 +376,19 @@ const Viewexpenses = ({ navigation }) => {
 
     return (
         <Container style={style.container}>
-            
+            {screenLoading && 
+                <Modal
+                    visible={true}
+                    transparent={true}
+                    onRequestClose={() => { setScreenLoading(false) }}
+                >
+                    <View style={style.modalContainer}>
+                        <View style={[style.modalBlock, style.smallModalBlock]}>
+                            <ActivityIndicator color="#7b7f9c" size="large" />
+                        </View>
+                    </View>
+                </Modal>
+            }
             <View style={style.header}>
                 <Button block style={style.sortBtn} onPress={() => setShowSortOptions(true)}>
                     <FontAwesome name="sort" size={16} color="#fff" />
@@ -345,7 +401,7 @@ const Viewexpenses = ({ navigation }) => {
                     onClose={() => setShowSortOptions(false)}
                     onApply={applyOption}
                 />
-                {Object.keys(expenses).length > 0 ?
+                {!loading ?
                     <Renderexpenses
                         expenses={expenses}
                         selectedDateRange={selectedOption}
@@ -357,15 +413,15 @@ const Viewexpenses = ({ navigation }) => {
                 <Body>
                     <Row>
                         <Col>
-                            <Button block style={[style.footerBtn, style.firstBtn]} onPress={savePdf}>
+                            <Button block style={style.footerBtn} onPress={savePdf}>
                                 <Text uppercase={false}>Save as PDF</Text>
                             </Button>
                         </Col>
-                        <Col>
-                            <Button block style={style.footerBtn}>
+                        {/* <Col>
+                            <Button block style={[style.footerBtn, style.secondBtn]} onPress={saveExcel}>
                                 <Text uppercase={false}>Save as Excel</Text>
                             </Button>
-                        </Col>
+                        </Col> */}
                     </Row>
                 </Body>
             </Footer>

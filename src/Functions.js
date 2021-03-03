@@ -226,7 +226,7 @@ class Functions extends React.Component {
                         totalExpense += item.amount;
                     }
                 }
-                totalBalance = totalIncome - totalexpense;
+                totalBalance = totalIncome - totalExpense;
                 resolve({ income: totalIncome, expense: totalExpense, balance: totalBalance });
             });
         });
@@ -316,11 +316,18 @@ class Functions extends React.Component {
         }
     })
 
-    static saveExcel = expense => {
-        new Promise((resolve, reject) => {
-            resolve();
-        })
-    } 
+    // static saveExcel = data => new Promise((resolve, reject) => {
+    //     const filename = getFilename() + ".xslx";
+    //     RNFS.writeFile(DOWNLOAD_PATH + filename, data, "binary")
+    //         .then(() => {
+    //             resolve(filename);
+    //         })
+    //         .catch(e => {
+    //             showToastMessage("Could not save as excel file")
+    //             console.log("Error")
+    //             reject(e);
+    //         });
+    // })
 
     static openFile = filename => openFile(DOWNLOAD_PATH + filename)
 }
