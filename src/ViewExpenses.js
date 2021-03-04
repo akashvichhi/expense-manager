@@ -341,7 +341,10 @@ const Viewexpenses = ({ navigation }) => {
                     { cancelable: true }
                 );
             })
-            .catch(error => console.error(error))
+            .catch(error => {
+                setScreenLoading(false);
+                console.error(error)
+            })
     }
 
     const saveCSV = () => {

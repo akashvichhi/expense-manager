@@ -12,6 +12,7 @@ const createDownloadPath = () => new Promise((resolve, reject) => {
     RNFS.mkdir(DOWNLOAD_PATH)
         .then(() => resolve(true))
         .catch(error => {
+            console.log(DOWNLOAD_PATH)
             console.error(error);
             resolve(false);
         });
@@ -35,7 +36,7 @@ const askAndroidPermissions = () => new Promise((resolve, reject) => {
     else {
         resolve(true);
     }
-})
+});
 
 var DB = SQLite.openDatabase({
   name: "expansemanager",
