@@ -13,7 +13,7 @@ import MainApp from './src/App';
 const App =() => {
 	return (
 		<>
-			<StatusBar barStyle="dark-content" />
+			<StatusBar backgroundColor="#808080" barStyle="light-content" />
 			<SafeAreaView style={{ flex: 1 }}>
 				<MainApp />
 			</SafeAreaView>

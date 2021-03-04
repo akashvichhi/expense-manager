@@ -1,5 +1,5 @@
 import React from 'react';
-import { ToastAndroid } from 'react-native';
+import { ToastAndroid, PermissionsAndroid } from 'react-native';
 import RNHTMLtoPDF from 'react-native-html-to-pdf';
 import FileViewer from 'react-native-file-viewer';
 var SQLite = require("react-native-sqlite-storage");
@@ -8,7 +8,34 @@ var RNFS = require("react-native-fs");
 const DOWNLOAD_PATH =  RNFS.ExternalStorageDirectoryPath + "/Expense Manager/";
 const TABLE_NAME = "expanses";
 
-RNFS.mkdir(DOWNLOAD_PATH).catch(error => console.error(error));
+const createDownloadPath = () => new Promise((resolve, reject) => {
+    RNFS.mkdir(DOWNLOAD_PATH)
+        .then(() => resolve(true))
+        .catch(error => {
+            console.error(error);
+            resolve(false);
+        });
+});
+
+const askAndroidPermissions = () => new Promise((resolve, reject) => {
+    if(Platform.OS === "android")  {   
+        const permissions = [
+            PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+        ];
+        PermissionsAndroid.requestMultiple(permissions).then(granted => {
+            if(granted['android.permission.WRITE_EXTERNAL_STORAGE'] === PermissionsAndroid.RESULTS.GRANTED) {
+                resolve(true);
+            }
+            resolve(false);
+        }).catch(error => {
+            console.error("Error while asking android permissions");
+            reject(error);
+        });
+    }
+    else {
+        resolve(true);
+    }
+})
 
 var DB = SQLite.openDatabase({
   name: "expansemanager",
@@ -298,17 +325,25 @@ class Functions extends React.Component {
 
     static savePdf = expense => new Promise(async (resolve, reject) => {
         try {
-            const html = generateHtml(expense);
-            const filename = getFilename();
-            const options = {
-                html: html,
-                fileName: filename,
-                directory: "Expense Manager",
-                height: 780,
-                width: 780,
+            const granted = await askAndroidPermissions();
+            if(granted) {
+                await createDownloadPath();
+                const html = generateHtml(expense);
+                const filename = getFilename();
+                const options = {
+                    html: html,
+                    fileName: filename,
+                    directory: "Expense Manager",
+                    height: 780,
+                    width: 780,
+                }
+                await RNHTMLtoPDF.convert(options);
+                resolve(filename + ".pdf");
             }
-            await RNHTMLtoPDF.convert(options);
-            resolve(filename + ".pdf");
+            else {
+                showToastMessage("Could not save file");
+                reject(error);
+            }
         }
         catch(error) {
             showToastMessage("Could not save file");
@@ -317,32 +352,43 @@ class Functions extends React.Component {
     })
 
     static saveCSV = expenses => new Promise((resolve, reject) => {
-        let csvString = "Sr No,Date,Time,Income,Expense,Description\n";
-        // construct csvString
-        for(let date in expenses) {
-            let exp = expenses[date];
-            let header = date + "\n";
-            let row = header;
-            exp.forEach((e, i) => {
-                let date = Functions.getFormattedDate(new Date(Number(e.datetime)));
-                let time = Functions.getFormattedTime(new Date(Number(e.datetime)));
-                let income = e.type == "income" ? e.amount : "";
-                let expense = e.type == "expense" ? e.amount : "";
-                row += `${(i+1)},${date},${time},${income},${expense},${e.description}\n`;
-            });
-            csvString += row + "\n";
-        }
+        askAndroidPermissions().then(async granted => {
+            if(granted) {
+                await createDownloadPath();
+                let csvString = "Sr No,Date,Time,Income,Expense,Description\n";
+                // construct csvString
+                for(let date in expenses) {
+                    let exp = expenses[date];
+                    let header = date + "\n";
+                    let row = header;
+                    exp.forEach((e, i) => {
+                        let date = Functions.getFormattedDate(new Date(Number(e.datetime)));
+                        let time = Functions.getFormattedTime(new Date(Number(e.datetime)));
+                        let income = e.type == "income" ? e.amount : "";
+                        let expense = e.type == "expense" ? e.amount : "";
+                        row += `${(i+1)},${date},${time},${income},${expense},${e.description}\n`;
+                    });
+                    csvString += row + "\n";
+                }
 
-        const filename = getFilename() + ".csv";
-        RNFS.writeFile(DOWNLOAD_PATH + filename, csvString)
-            .then(() => {
-                resolve(filename);
-            })
-            .catch(e => {
-                showToastMessage("Could not save csv file")
-                console.log("Error")
-                reject(e);
-            });
+                const filename = getFilename() + ".csv";
+                RNFS.writeFile(DOWNLOAD_PATH + filename, csvString)
+                    .then(() => {
+                        resolve(filename);
+                    })
+                    .catch(e => {
+                        showToastMessage("Could not save csv file")
+                        console.log("Error")
+                        reject(e);
+                    });
+            }
+            else {
+                showToastMessage("Could not save csv file");
+                reject(true);
+            }
+        }).catch(e => {
+            showToastMessage("Could not save csv file"); reject(e)
+        });
     })
 
     static openFile = filename => openFile(DOWNLOAD_PATH + filename)

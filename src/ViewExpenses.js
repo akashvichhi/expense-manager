@@ -4,7 +4,6 @@ import { Container, Content, Text, Button, ListItem, List, Body, Icon, Left, Rig
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Functions from './Functions';
 import { useFocusEffect } from '@react-navigation/native';
-import * as XLSX from 'xlsx';
 
 const style = StyleSheet.create({
     container: {
